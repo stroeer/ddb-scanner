@@ -1,4 +1,4 @@
-# ddb-scanner
+# ddb-scanner ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/stroeer/ddb-scanner?color=%23f653a6&label=Release&style=flat-square)
 
 Package for scanning DynamoDb tables in parallel. This is an updated version of https://github.com/clearbit/go-ddb
 
