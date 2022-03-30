@@ -1,4 +1,4 @@
-# ddb-scanner ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/stroeer/ddb-scanner?color=%23f653a6&label=Release&style=flat-square)
+# ddb-scanner
 
 Package for scanning DynamoDb tables in parallel. This is an updated version of https://github.com/clearbit/go-ddb
 
@@ -39,7 +39,7 @@ func main() {
 		var items []item
 		err := attributevalue.UnmarshalListOfMaps(ddbItems, &items)
 		if err != nil {
-			log.Fatalf("failed to unmarshal ddbItems, %w", err)
+			log.Fatalf("failed to unmarshal ddbItems, %v", err)
 		}
 		for _, i := range items {
 			log.Printf("pk: %s\n", i.Pk)
