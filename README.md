@@ -28,10 +28,10 @@ func main() {
 
 	sc := scanner.New(scanner.Config{
 		Svc:                  dynamodb.NewFromConfig(cfg),
-		ProjectionExpression: "pk",
-		Region:               region,
-		TableName:            "test",
-		TotalSegments:        20,
+		ProjectionExpression: aws.String("pk"),
+		Region:               aws.String(region),
+		TableName:            aws.String("test"),
+		TotalSegments:        aws.Int32(20),
 	})
 
 	start := time.Now()
