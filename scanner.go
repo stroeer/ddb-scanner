@@ -5,12 +5,10 @@ import (
 	"expvar"
 	"log"
 	"sync"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/jpillora/backoff"
+	"github.com/aws/smithy-go/ptr"
 )
 
 func New(cfg Config) *Scanner {
@@ -36,37 +34,31 @@ func (s *Scanner) Start(handler Handler) {
 	for i := 0; i < s.SegmentCount; i++ {
 		s.waitGroup.Add(1)
 		segment := (s.SegmentCount * s.SegmentOffset) + i
-		go s.scan(segment, handler)
+		go s.scan(ptr.Int32(int32(segment)), handler)
 	}
 	s.waitGroup.Wait()
 }
 
-func (s *Scanner) scan(segment int, handler Handler) {
+func (s *Scanner) scan(segment *int32, handler Handler) {
 	defer s.waitGroup.Done()
-
-	bk := &backoff.Backoff{
-		Max:    5 * time.Minute,
-		Jitter: true,
-	}
 
 	var lastEvaluatedKey map[string]types.AttributeValue
 	for {
 		resp, err := s.Svc.Scan(context.TODO(), &dynamodb.ScanInput{
-			ExclusiveStartKey:        lastEvaluatedKey,
-			ExpressionAttributeNames: s.ExpressionAttributeNames,
-			Limit:                    aws.Int32(s.Limit),
-			ProjectionExpression:     aws.String(s.ProjectionExpression),
-			Segment:                  aws.Int32(int32(segment)),
-			TableName:                aws.String(s.TableName),
-			TotalSegments:            aws.Int32(int32(s.TotalSegments)),
+			ExclusiveStartKey:         lastEvaluatedKey,
+			ExpressionAttributeNames:  s.ExpressionAttributeNames,
+			ExpressionAttributeValues: s.ExpressionAttributeValues,
+			FilterExpression:          s.FilterExpression,
+			Limit:                     s.Limit,
+			ProjectionExpression:      s.ProjectionExpression,
+			Segment:                   segment,
+			TableName:                 s.TableName,
+			TotalSegments:             s.TotalSegments,
 		})
 
 		if err != nil {
-			log.Printf("scan operation failed- backing off. %v\n", err)
-			time.Sleep(bk.Duration())
-			continue
+			log.Fatalf("scan operation failed: %v", err)
 		}
-		bk.Reset()
 
 		handler.Handle(resp.Items)
 
